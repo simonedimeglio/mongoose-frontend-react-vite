@@ -8,16 +8,33 @@ export default function Crud() {
   // Stato per gestire l'utente in fase di modifica
   const [editingUser, setEditingUser] = useState(null);
 
+  // PAGINAZIONE:
+  const [currentPage, setCurrentPage] = useState(1); // Pagina corrente
+  const [totalPages, setTotalPages] = useState(1); // Numero totale di pagine
+  const [limit, setLimit] = useState(10); // Numero di utenti per pagina
+
   // Effetto che si attiva al montaggio del componente per caricare gli utenti
   useEffect(() => {
     getUtenti();
-  }, []);
+  }, [currentPage, limit]); // PAGINAZIONE: inserite le dipendenze
+  // In questo modo abbiamo un Effetto che si attiva al montaggio del componente e quando cambiamo pagina o limite
 
-  // Funzione per ottenere la lista degli utenti dal server
+  // Funzione ORIGINALE per ottenere la lista degli utenti dal server
+  // const getUtenti = () => {
+  //   fetch("http://localhost:5001/api/users")
+  //     .then((response) => response.json())
+  //     .then((data) => setUsers(data))
+  //     .catch((error) => console.error("Errore nella richiesta:", error));
+  // };
+
+  // FUNZIONE MODIFICATA PER PAGINAZIONE
   const getUtenti = () => {
-    fetch("http://localhost:5001/api/users")
+    fetch(`http://localhost:5001/api/users?page=${currentPage}&limit=${limit}`)
       .then((response) => response.json())
-      .then((data) => setUsers(data))
+      .then((data) => {
+        setUsers(data.users);
+        setTotalPages(data.totalPages);
+      })
       .catch((error) => console.error("Errore nella richiesta:", error));
   };
 
@@ -144,6 +161,48 @@ export default function Crud() {
           </li>
         ))}
       </ul>
+
+      {/* PAGINAZIONE */}
+      <div>
+        {/* Pulsante per andare alla pagina precedente */}
+        <button
+          onClick={() =>
+            setCurrentPage((currentPage) => Math.max(currentPage - 1, 1))
+          }
+          // Disabilita il pulsante se siamo già sulla prima pagina
+          disabled={currentPage === 1}
+        >
+          Precedente
+        </button>
+
+        {/* Mostra il numero della pagina corrente e il totale delle pagine */}
+        <span>
+          Pagina {currentPage} di {totalPages}
+        </span>
+
+        {/* Pulsante per andare alla pagina successiva */}
+        <button
+          onClick={() =>
+            setCurrentPage((currentPage) =>
+              Math.min(currentPage + 1, totalPages),
+            )
+          }
+          // Disabilita il pulsante se siamo sull'ultima pagina
+          disabled={currentPage === totalPages}
+        >
+          Successiva
+        </button>
+
+        {/* Selezione per cambiare il numero di elementi per pagina */}
+        <select
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value))} // perchè da select ottengo stringhe!
+        >
+          <option value={5}>5 per pagina</option>
+          <option value={10}>10 per pagina</option>
+          <option value={20}>20 per pagina</option>
+        </select>
+      </div>
     </div>
   );
 }
